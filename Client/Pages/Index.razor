@@ -1,0 +1,57 @@
+﻿@using Server.Models;
+@using System.Net.Http
+@using System.Net.Http.Json
+@using System.Threading.Tasks
+@inject HttpClient Http
+
+<PageTitle>Twitter Stream</PageTitle>
+
+<h1>Twitter Stream</h1>
+
+<p>This page displays the total number of tweets returned and the top 10 hash tags found in those tweets</p>
+
+@if (streamInfo == null)
+{
+    <p><em>@message</em></p>
+}
+else
+{
+    <div>Total Tweets: @streamInfo.TweetCount</div>
+    <br/>
+    @if (streamInfo.TopTags != null)
+    {
+        <table style="width:50%;margin-left:auto;margin-right:auto">
+            <thead>
+                <tr><th>HashTag</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var tags in streamInfo.TopTags)
+                {
+                    <tr><td>@tags.Tag</td><td>@tags.Count</td></tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private StreamInfo? streamInfo;
+    private System.Threading.Timer? timer;
+    private string message = "Loading...";
+    
+    protected override void OnInitialized()
+    {
+        timer = new System.Threading.Timer(async (object? stateInfo) =>
+        {
+            try
+            {
+                streamInfo = await Http.GetFromJsonAsync<StreamInfo>("TwitterFeed");
+            }
+            catch
+            {
+                message = "Error loading data";
+            }
+			StateHasChanged(); 
+		}, new System.Threading.AutoResetEvent(false), 0, 5000); 
+    }
+}
